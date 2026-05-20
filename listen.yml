@@ -1,0 +1,44 @@
+name: 🤖 Telegram Commands Listener
+
+on:
+  schedule:
+    # كل 5 دقايق للتحقق من الأوامر الجديدة
+    - cron: '*/5 * * * *'
+
+  workflow_dispatch:
+
+jobs:
+  listen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 🎧 Process Telegram Commands
+        env:
+          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          SYMBOLS: ${{ secrets.SYMBOLS || 'TSLA,NVDA,AAPL,META,GOOGL,MSFT,AMD' }}
+        run: python listen.py
+
+      - name: 💾 Save offset
+        run: |
+          if [ -f last_offset.json ]; then
+            git config user.name "ashum-bot"
+            git config user.email "bot@ashum.local"
+            git add last_offset.json
+            git diff --cached --quiet || git commit -m "chore: update offset"
+            git push || true
+          fi

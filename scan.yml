@@ -1,0 +1,54 @@
+name: 📈 Scheduled Market Scan
+
+on:
+  schedule:
+    # كل الأوقات بـ UTC (الرياض = UTC+3)
+    # السوق الأمريكي 9:30 EST = 14:30 UTC (شتاء) / 13:30 UTC (صيف)
+    - cron: '25 13 * * 1-5'  # 4:25م الرياض - ما قبل الافتتاح
+    - cron: '35 13 * * 1-5'  # 4:35م الرياض - الافتتاح
+    - cron: '0 14 * * 1-5'   # 5:00م الرياض - opening range
+    - cron: '30 14 * * 1-5'  # 5:30م الرياض - trend
+    - cron: '30 15 * * 1-5'  # 6:30م الرياض - mid morning
+    - cron: '0 18 * * 1-5'   # 9:00م الرياض - power hour
+    - cron: '45 18 * * 1-5'  # 9:45م الرياض - late setups
+    - cron: '30 19 * * 1-5'  # 10:30م الرياض - closing
+
+  # تشغيل يدوي
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'وضع الفحص'
+        required: true
+        default: 'swing'
+        type: choice
+        options:
+          - swing
+          - dte
+      min_confidence:
+        description: 'الحد الأدنى للثقة'
+        required: false
+        default: '75'
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 🔍 Run Market Scan
+        env:
+          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          SYMBOLS: ${{ secrets.SYMBOLS || 'TSLA,NVDA,AAPL,META,GOOGL,MSFT,AMD' }}
+          SCAN_MODE: ${{ github.event.inputs.mode || 'swing' }}
+          MIN_CONFIDENCE: ${{ github.event.inputs.min_confidence || '75' }}
+          SEND_SUMMARY: 'false'
+        run: python scan.py
