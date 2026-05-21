@@ -1,8 +1,7 @@
-name: 🤖 Telegram Commands Listener
+name: 🤖 Telegram Commands Listener V2
 
 on:
   schedule:
-    # كل 5 دقايق للتحقق من الأوامر الجديدة
     - cron: '*/5 * * * *'
 
   workflow_dispatch:
@@ -11,7 +10,6 @@ jobs:
   listen:
     runs-on: ubuntu-latest
     timeout-minutes: 8
-
     permissions:
       contents: write
 
@@ -33,12 +31,10 @@ jobs:
           SYMBOLS: ${{ secrets.SYMBOLS || 'TSLA,NVDA,AAPL,META,GOOGL,MSFT,AMD' }}
         run: python listen.py
 
-      - name: 💾 Save offset
+      - name: 💾 Save state
         run: |
-          if [ -f last_offset.json ]; then
-            git config user.name "ashum-bot"
-            git config user.email "bot@ashum.local"
-            git add last_offset.json
-            git diff --cached --quiet || git commit -m "chore: update offset"
-            git push || true
-          fi
+          git config user.name "ashum-bot"
+          git config user.email "bot@ashum.local"
+          git add last_offset.json positions.json closed.json 2>/dev/null || true
+          git diff --cached --quiet || git commit -m "chore: state update [listen]"
+          git push || true

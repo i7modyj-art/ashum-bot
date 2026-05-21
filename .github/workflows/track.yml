@@ -1,0 +1,41 @@
+name: 🎯 Position Tracker
+
+on:
+  schedule:
+    # كل 15 دقيقة خلال ساعات السوق الأمريكي (UTC 13-20 = 4م-11م الرياض)
+    - cron: '*/15 13-20 * * 1-5'
+
+  workflow_dispatch:
+
+jobs:
+  track:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 🎯 Track Open Positions
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python track.py
+
+      - name: 💾 Save tracking updates
+        run: |
+          if [ -f positions.json ] || [ -f closed.json ]; then
+            git config user.name "ashum-bot"
+            git config user.email "bot@ashum.local"
+            git add positions.json closed.json 2>/dev/null || true
+            git diff --cached --quiet || git commit -m "chore: tracking update [auto]"
+            git push || true
+          fi

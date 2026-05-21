@@ -1,0 +1,16 @@
+{
+  "closed": [],
+  "stats": {
+    "total": 0,
+    "wins": 0,
+    "losses": 0,
+    "expired": 0,
+    "winRate": 0,
+    "avgWin": 0,
+    "avgLoss": 0,
+    "bestTrade": 0,
+    "worstTrade": 0
+  },
+  "lastUpdated": "2026-05-20T00:00:00Z",
+  "version": "2.0"
+}
